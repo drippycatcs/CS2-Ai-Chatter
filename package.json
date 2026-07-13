@@ -1,0 +1,31 @@
+{
+  "name": "cs2-ai-chatter",
+  "version": "1.0.0",
+  "description": "A Counter-Strike 2 chat bot that replies in-game using AI (local Ollama or OpenRouter free models)",
+  "main": "toxicBot.js",
+  "scripts": {
+    "start": "node start.js",
+    "setup": "node setup.js",
+    "bot": "node toxicBot.js",
+    "dashboard": "node dashboard.js",
+    "test": "node test.js",
+    "check": "node checkSetup.js"
+  },
+  "keywords": [
+    "cs2",
+    "counter-strike",
+    "chat-bot",
+    "ai",
+    "ollama",
+    "openrouter",
+    "gaming"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "koffi": "^2.15.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

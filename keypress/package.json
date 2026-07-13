@@ -1,0 +1,12 @@
+{
+  "name": "cs2-keypress",
+  "version": "1.0.0",
+  "description": "Standalone key press module using koffi FFI - no Visual Studio build tools needed",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "koffi": "^2.15.1"
+  }
+}

@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CS2 Chat Bot Dashboard</title>
+  <style>
+    :root {
+      --bg-primary: #0f0f0f;
+      --bg-secondary: #1a1a1a;
+      --bg-card: #242424;
+      --text-primary: #ffffff;
+      --text-secondary: #888888;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --border: #333333;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 30px;
+    }
+
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header .status { display: flex; align-items: center; gap: 8px; }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+    .status-dot.offline { background: var(--error); animation: none; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .stat-card .value { font-size: 2rem; font-weight: 700; color: var(--accent); }
+    .stat-card .label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+      background: var(--bg-secondary);
+      padding: 5px;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .tab:hover { color: var(--text-primary); }
+    .tab.active { background: var(--accent); color: white; }
+
+    /* Panels */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 25px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Forms */
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    textarea { min-height: 100px; resize: vertical; }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 24px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn:hover { background: var(--accent-hover); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-danger { background: var(--error); }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-secondary { background: var(--bg-secondary); border: 1px solid var(--border); }
+    .provider-btn { flex: 1; text-align: center; }
+    .provider-btn.active { background: var(--accent); }
+    .provider-btn:not(.active) { background: var(--bg-secondary); border: 1px solid var(--border); }
+
+    /* Blacklist */
+    .blacklist-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .blacklist-item .remove {
+      background: var(--error);
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    /* Chat Tester */
+    .chat-box {
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+      min-height: 60px;
+    }
+
+    .chat-box .response { color: var(--success); }
+    .chat-box .filtered { color: var(--warning); font-style: italic; }
+    .chat-box .meta { font-size: 0.8rem; color: var(--text-secondary); margin-top: 8px; }
+
+    /* History */
+    .history-item {
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+    }
+
+    .history-item .user { color: var(--accent); font-weight: 500; }
+    .history-item .message { margin: 8px 0; }
+    .history-item .bot-response { color: var(--success); }
+    .history-item .time { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* Toggle */
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toggle {
+      position: relative;
+      width: 50px;
+      height: 26px;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle .slider {
+      position: absolute;
+      inset: 0;
+      background: var(--bg-secondary);
+      border-radius: 26px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .toggle .slider:before {
+      content: "";
+      position: absolute;
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle input:checked + .slider { background: var(--accent); }
+    .toggle input:checked + .slider:before { transform: translateX(24px); }
+
+    /* Range slider */
+    input[type="range"] {
+      -webkit-appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--bg-secondary);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+    }
+
+    .range-value {
+      display: inline-block;
+      min-width: 40px;
+      text-align: center;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* Alert */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+    }
+
+    .alert.success { background: rgba(34, 197, 94, 0.1); color: var(--success); border: 1px solid var(--success); }
+    .alert.error { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid var(--error); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header { flex-direction: column; gap: 15px; text-align: center; }
+      .tabs { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>CS2 Chat Bot</h1>
+      <div class="status">
+        <div class="status-dot offline" id="botStatus"></div>
+        <span id="botStatusText">Bot: checking...</span>
+      </div>
+      <div class="status">
+        <div class="status-dot" id="providerStatus"></div>
+        <span id="providerStatusText">Checking...</span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="value" id="statUptime">0:00</div>
+        <div class="label">Uptime</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" id="statResponses">0</div>
+        <div class="label">Responses</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" id="statFiltered">0</div>
+        <div class="label">Filtered</div>
+      </div>
+      <div class="stat-card">
+        <div class="value" id="statBlacklist">0</div>
+        <div class="label">Blacklisted</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-panel="tester">AI Tester</button>
+      <button class="tab" data-panel="personality">Personality</button>
+      <button class="tab" data-panel="behavior">Human Behavior</button>
+      <button class="tab" data-panel="filters">Smart Filters</button>
+      <button class="tab" data-panel="blacklist">Blacklist</button>
+      <button class="tab" data-panel="history">History</button>
+      <button class="tab" data-panel="settings">Settings</button>
+    </div>
+
+    <!-- AI Tester Panel -->
+    <div class="panel active" id="tester">
+      <div class="card">
+        <h2>Test AI Responses</h2>
+        <div id="testerAlert"></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Player Name</label>
+            <input type="text" id="testName" placeholder="EnemyPlayer" value="Enemy">
+          </div>
+          <div class="form-group">
+            <label>Message</label>
+            <input type="text" id="testMessage" placeholder="why are you so bad?">
+          </div>
+        </div>
+        <button class="btn" onclick="testAI()">Send Test Message</button>
+
+        <div class="chat-box">
+          <div id="testResponse">Send a message to see the AI response...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personality Panel -->
+    <div class="panel" id="personality">
+      <div class="card">
+        <h2>AI Personality</h2>
+        <div id="personalityAlert"></div>
+
+        <div class="form-group">
+          <div class="toggle-group">
+            <label class="toggle">
+              <input type="checkbox" id="disablePersonality">
+              <span class="slider"></span>
+            </label>
+            <span>Disable Personality (minimal prompt)</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Bot Name</label>
+          <input type="text" id="botName" placeholder="e.g. ToxicBot, TrashTalkGPT...">
+          <small style="color: var(--text-secondary);">The AI will know this is its name and respond when addressed.</small>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tone</label>
+            <select id="tone">
+              <option value="witty">Witty</option>
+              <option value="aggressive">Aggressive</option>
+              <option value="toxic">Toxic</option>
+              <option value="friendly">Friendly</option>
+              <option value="troll">Troll</option>
+              <option value="roasting">Roasting</option>
+              <option value="savage">Savage</option>
+              <option value="sarcastic">Sarcastic</option>
+              <option value="chaotic">Chaotic</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Style</label>
+            <select id="style">
+              <option value="casual">Casual</option>
+              <option value="competitive">Competitive</option>
+              <option value="meme">Meme</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="toggle-group">
+            <label class="toggle">
+              <input type="checkbox" id="uncensored">
+              <span class="slider"></span>
+            </label>
+            <span>Uncensored Mode</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>System Prompt (overrides default personality)</label>
+          <div id="systemPromptWarning" class="alert error" style="display: none;">Warning: Custom system prompts can break the bot if not formatted correctly. Only edit if you know what you're doing.</div>
+          <textarea id="systemPrompt" style="min-height: 120px;" placeholder=""></textarea>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <small style="color: var(--text-secondary);">The default prompt is shown above. Edit to customize.</small>
+            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="resetSystemPrompt()">Reset to Default</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Additional Context</label>
+          <textarea id="customContext" placeholder="Extra info the AI should know, e.g. 'my name is John' or 'we're playing competitive'"></textarea>
+        </div>
+
+        <button class="btn" onclick="savePersonality()">Save Personality</button>
+      </div>
+    </div>
+
+    <!-- Human Behavior Panel -->
+    <div class="panel" id="behavior">
+      <div class="card">
+        <h2>Human-Like Behavior</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">Make the bot act more like a real player</p>
+        <div id="behaviorAlert"></div>
+
+        <div class="form-group">
+          <div class="toggle-group">
+            <label class="toggle">
+              <input type="checkbox" id="humanEnabled" checked>
+              <span class="slider"></span>
+            </label>
+            <span>Enable Human-Like Behavior</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Response Delay: <span class="range-value" id="delayValue">500</span>ms - <span class="range-value" id="delayMaxValue">2000</span>ms</label>
+          <div class="form-row">
+            <input type="range" id="minDelay" min="0" max="3000" value="500">
+            <input type="range" id="maxDelay" min="500" max="5000" value="2000">
+          </div>
+          <small style="color: var(--text-secondary);">Random delay between these values before responding</small>
+        </div>
+
+        <div class="form-group">
+          <label>Skip Chance: <span class="range-value" id="skipValue">10</span>%</label>
+          <input type="range" id="skipChance" min="0" max="50" value="10">
+          <small style="color: var(--text-secondary);">Chance to ignore a message (more human-like)</small>
+        </div>
+
+        <div class="form-group">
+          <label>Typo Chance: <span class="range-value" id="typoValue">5</span>%</label>
+          <input type="range" id="typoChance" min="0" max="30" value="5">
+          <small style="color: var(--text-secondary);">Chance to add small typos to responses</small>
+        </div>
+
+        <div class="form-group">
+          <div class="toggle-group">
+            <label class="toggle">
+              <input type="checkbox" id="variableLength">
+              <span class="slider"></span>
+            </label>
+            <span>Variable Response Length (sometimes shorter)</span>
+          </div>
+        </div>
+
+        <button class="btn" onclick="saveBehavior()">Save Behavior Settings</button>
+      </div>
+    </div>
+
+    <!-- Smart Filters Panel -->
+    <div class="panel" id="filters">
+      <div class="card">
+        <h2>Smart Message Filtering</h2>
+        <div id="filterAlert"></div>
+
+        <div class="form-group">
+          <div class="toggle-group">
+            <label class="toggle">
+              <input type="checkbox" id="filterEnabled" checked>
+              <span class="slider"></span>
+            </label>
+            <span>Enable Smart Filtering</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <div class="toggle-group">
+              <label class="toggle">
+                <input type="checkbox" id="filterGreetings" checked>
+                <span class="slider"></span>
+              </label>
+              <span>Ignore Greetings (hi, hello, bye)</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="toggle-group">
+              <label class="toggle">
+                <input type="checkbox" id="filterCallouts" checked>
+                <span class="slider"></span>
+              </label>
+              <span>Ignore Callouts (A, B, mid, rush)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <div class="toggle-group">
+              <label class="toggle">
+                <input type="checkbox" id="filterSingleWords" checked>
+                <span class="slider"></span>
+              </label>
+              <span>Ignore Single Short Words</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="toggle-group">
+              <label class="toggle">
+                <input type="checkbox" id="filterSystem" checked>
+                <span class="slider"></span>
+              </label>
+              <span>Ignore System Messages</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Minimum Message Length: <span class="range-value" id="minLenValue">5</span> chars</label>
+          <input type="range" id="minLength" min="1" max="20" value="5">
+        </div>
+
+        <button class="btn" onclick="saveFilters()">Save Filter Settings</button>
+      </div>
+    </div>
+
+    <!-- Blacklist Panel -->
+    <div class="panel" id="blacklist">
+      <div class="card">
+        <h2>Player Blacklist</h2>
+        <div id="blacklistAlert"></div>
+
+        <div class="form-row" style="margin-bottom: 20px;">
+          <input type="text" id="blacklistName" placeholder="Enter player name...">
+          <button class="btn" onclick="addBlacklist()">Add to Blacklist</button>
+        </div>
+
+        <div id="blacklistList"></div>
+      </div>
+    </div>
+
+    <!-- History Panel -->
+    <div class="panel" id="history">
+      <div class="card">
+        <h2>Chat History</h2>
+        <button class="btn btn-danger" onclick="clearHistory()" style="margin-bottom: 20px;">Clear History</button>
+        <div id="historyList"></div>
+      </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="panel" id="settings">
+      <div class="card">
+        <h2>Bot Settings</h2>
+        <div id="settingsAlert"></div>
+
+        <!-- Provider Switcher -->
+        <div class="form-group">
+          <label>AI Provider</label>
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <button class="btn provider-btn active" id="providerLocal" onclick="switchProvider('local')">Local (Ollama)</button>
+            <button class="btn btn-secondary provider-btn" id="providerOpenrouter" onclick="switchProvider('openrouter')">OpenRouter (Cloud)</button>
+          </div>
+          <small style="color: var(--text-secondary);">Local uses Ollama on your machine. OpenRouter uses free cloud AI models (needs API key).</small>
+        </div>
+
+        <!-- Local (Ollama) Settings -->
+        <div id="localSettings">
+          <div class="form-group">
+            <label>Ollama Host</label>
+            <input type="text" id="ollamaHost" value="http://127.0.0.1:11434">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fast Model (quick chat)</label>
+              <select id="modelFast">
+                <option value="">Loading models...</option>
+              </select>
+              <small style="color: var(--text-secondary);">Used for normal chat - pick a small/fast model</small>
+            </div>
+            <div class="form-group">
+              <label>Smart Model (complex requests)</label>
+              <select id="modelSmart">
+                <option value="">Loading models...</option>
+              </select>
+              <small style="color: var(--text-secondary);">Used for recipes, tutorials, etc - pick a smarter model</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- OpenRouter Settings -->
+        <div id="openrouterSettings" style="display: none;">
+          <div class="form-group">
+            <label>OpenRouter API Key</label>
+            <input type="password" id="openrouterApiKey" placeholder="sk-or-v1-...">
+            <small style="color: var(--text-secondary);">Get a free key at <span style="color: var(--accent);">openrouter.ai/keys</span> - or set OPENROUTER_API_KEY in your .env file</small>
+          </div>
+
+          <div style="margin-bottom: 15px;">
+            <button class="btn btn-secondary" id="refreshModelsBtn" style="padding: 8px 16px; font-size: 0.85rem;" onclick="loadOpenRouterModels()">Refresh Free Models</button>
+            <span id="openrouterModelCount" style="color: var(--text-secondary); margin-left: 10px; font-size: 0.85rem;"></span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fast Model (quick chat)</label>
+              <select id="openrouterModelFast">
+                <option value="openai/gpt-oss-20b:free">openai/gpt-oss-20b:free</option>
+              </select>
+              <small style="color: var(--text-secondary);">Model for normal chat</small>
+            </div>
+            <div class="form-group">
+              <label>Smart Model (complex requests)</label>
+              <select id="openrouterModelSmart">
+                <option value="openai/gpt-oss-120b:free">openai/gpt-oss-120b:free</option>
+              </select>
+              <small style="color: var(--text-secondary);">Model for complex requests</small>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 6px;">
+            <label>Search All Models (free + paid)</label>
+            <input type="text" id="modelSearch" placeholder="e.g. mistral nemo, llama, gpt..." oninput="searchModels()">
+            <small style="color: var(--text-secondary);">Price shown per 1000 messages. Paid models need OpenRouter credits but are never rate-limited.</small>
+            <div id="modelSearchResults" style="margin-top: 8px; max-height: 260px; overflow-y: auto;"></div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Temperature: <span class="range-value" id="tempValue">0.5</span></label>
+            <input type="range" id="temperature" min="0" max="1.5" step="0.1" value="0.5">
+          </div>
+          <div class="form-group">
+            <label>GPU Layers</label>
+            <input type="number" id="gpuLayers" value="99" min="0" max="999">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Max Tokens</label>
+            <input type="number" id="numPredict" value="60" min="10" max="200">
+          </div>
+          <div class="form-group">
+            <label>Context Window</label>
+            <input type="number" id="numCtx" value="1024" min="256" max="4096">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Max Chars Per Message</label>
+            <input type="number" id="maxChars" value="128" min="50" max="250">
+          </div>
+          <div class="form-group">
+            <label>Queue Delay (ms)</label>
+            <input type="number" id="queueDelay" value="500" min="100" max="3000">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Reply Cooldown (ms)</label>
+            <input type="number" id="replyCooldown" value="0" min="0" max="60000" step="500">
+            <small style="color: var(--text-secondary);">Minimum time between replies (0 = off). Helps avoid chat-spam kicks.</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <div class="toggle-group">
+              <label class="toggle">
+                <input type="checkbox" id="sendToGame" checked>
+                <span class="slider"></span>
+              </label>
+              <span>Send Responses to Game</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Exec Key (bind to exec liveinput.cfg in CS2)</label>
+            <input type="text" id="execKey" value="v" maxlength="12" style="text-transform: lowercase;" placeholder="v">
+            <small style="color: var(--text-secondary);">The key that triggers your CS2 cfg bind.</small>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>CS2 Bind Command</label>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="bindCommand" readonly style="font-family: monospace; background: var(--bg-primary); cursor: text;">
+            <button class="btn btn-secondary" style="padding: 12px 16px; white-space: nowrap;" onclick="copyBind()">Copy</button>
+          </div>
+          <small style="color: var(--text-secondary);">Paste this in your CS2 console or add it to your autoexec.cfg</small>
+        </div>
+
+        <button class="btn" onclick="saveSettings()">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.panel).classList.add('active');
+      });
+    });
+
+    // Range slider updates
+    document.querySelectorAll('input[type="range"]').forEach(slider => {
+      slider.addEventListener('input', () => {
+        const id = slider.id;
+        if (id === 'minDelay') document.getElementById('delayValue').textContent = slider.value;
+        if (id === 'maxDelay') document.getElementById('delayMaxValue').textContent = slider.value;
+        if (id === 'skipChance') document.getElementById('skipValue').textContent = slider.value;
+        if (id === 'typoChance') document.getElementById('typoValue').textContent = slider.value;
+        if (id === 'minLength') document.getElementById('minLenValue').textContent = slider.value;
+        if (id === 'temperature') document.getElementById('tempValue').textContent = slider.value;
+      });
+    });
+
+    // Alert helper
+    function showAlert(containerId, message, type = 'success') {
+      const container = document.getElementById(containerId);
+      container.innerHTML = `<div class="alert ${type}">${message}</div>`;
+      setTimeout(() => container.innerHTML = '', 4000);
+    }
+
+    // Load initial data
+    async function loadData() {
+      try {
+        // Load config
+        const config = await fetch('/api/config').then(r => r.json());
+
+        // Populate personality
+        document.getElementById('disablePersonality').checked = config.disable_personality || false;
+        document.getElementById('botName').value = config.ai_personality?.name || '';
+        document.getElementById('tone').value = config.ai_personality?.tone || 'witty';
+        document.getElementById('style').value = config.ai_personality?.style || 'casual';
+        document.getElementById('uncensored').checked = config.ai_personality?.uncensored || false;
+        document.getElementById('customContext').value = config.custom_context || '';
+
+        // Load default system prompt and show it
+        const defaultPrompt = await fetch('/api/default-prompt').then(r => r.json());
+        const systemPromptField = document.getElementById('systemPrompt');
+        if (config.system_prompt) {
+          systemPromptField.value = config.system_prompt;
+        } else {
+          systemPromptField.value = defaultPrompt.prompt;
+          systemPromptField.style.color = 'var(--text-secondary)';
+        }
+
+        // Populate behavior
+        const behavior = config.human_behavior || {};
+        document.getElementById('humanEnabled').checked = behavior.enabled !== false;
+        document.getElementById('minDelay').value = behavior.min_delay || 500;
+        document.getElementById('maxDelay').value = behavior.max_delay || 2000;
+        document.getElementById('skipChance').value = behavior.skip_chance || 10;
+        document.getElementById('typoChance').value = behavior.typo_chance || 5;
+        document.getElementById('variableLength').checked = behavior.variable_length || false;
+
+        // Populate filters
+        const filters = config.smart_filter || {};
+        document.getElementById('filterEnabled').checked = filters.enabled !== false;
+        document.getElementById('filterGreetings').checked = filters.ignore_greetings !== false;
+        document.getElementById('filterCallouts').checked = filters.ignore_callouts !== false;
+        document.getElementById('filterSingleWords').checked = filters.ignore_single_words !== false;
+        document.getElementById('filterSystem').checked = filters.ignore_system_messages !== false;
+        document.getElementById('minLength').value = filters.min_interesting_length || 5;
+
+        // Populate settings
+        const bot = config.bot_settings || {};
+        // Set provider
+        currentProvider = bot.ai_provider || 'local';
+        switchProvider(currentProvider);
+
+        const defaults = config.defaults || {};
+        document.getElementById('ollamaHost').value = bot.ollama_host || defaults.ollama_host || 'http://127.0.0.1:11434';
+        document.getElementById('modelFast').value = bot.model_fast || bot.model || defaults.model_fast || '';
+        document.getElementById('modelSmart').value = bot.model_smart || bot.model || defaults.model_smart || '';
+        // The server sends a masked key ("sk-or-...abcd"); saving the masked
+        // value back is ignored server-side, so the real key is never lost
+        document.getElementById('openrouterApiKey').value = bot.openrouter_api_key || '';
+        if (bot.openrouter_api_key) {
+          document.getElementById('openrouterApiKey').placeholder = 'Key is set - paste a new one to replace it';
+        }
+        document.getElementById('openrouterModelFast').value = bot.openrouter_model_fast || defaults.openrouter_model_fast || '';
+        document.getElementById('openrouterModelSmart').value = bot.openrouter_model_smart || defaults.openrouter_model_smart || '';
+        document.getElementById('temperature').value = bot.temperature || 0.5;
+        document.getElementById('gpuLayers').value = bot.num_gpu_layers || 99;
+        document.getElementById('numPredict').value = bot.num_predict || 60;
+        document.getElementById('numCtx').value = bot.num_ctx || 1024;
+        document.getElementById('maxChars').value = bot.max_chars_per_message || 128;
+        document.getElementById('queueDelay').value = bot.queue_delay_ms || 500;
+        document.getElementById('replyCooldown').value = bot.reply_cooldown_ms || 0;
+        document.getElementById('sendToGame').checked = bot.send_to_game !== false;
+        document.getElementById('execKey').value = bot.exec_key || 'v';
+        updateBindCommand();
+
+        // Update range displays
+        document.querySelectorAll('input[type="range"]').forEach(s => s.dispatchEvent(new Event('input')));
+
+        // Load blacklist
+        const blacklist = await fetch('/api/blacklist').then(r => r.json());
+        renderBlacklist(blacklist.blacklisted_names || []);
+
+        // Load history
+        loadHistory();
+
+        // Load stats
+        loadStats();
+
+      } catch (err) {
+        console.error('Load error:', err);
+      }
+    }
+
+    // Stats
+    async function loadStats() {
+      try {
+        const stats = await fetch('/api/stats').then(r => r.json());
+        document.getElementById('statUptime').textContent = stats.uptimeFormatted || '0:00';
+        document.getElementById('statResponses').textContent = stats.responsesGenerated || 0;
+        document.getElementById('statFiltered').textContent = stats.messagesFiltered || 0;
+
+        // Bot process heartbeat
+        const botDot = document.getElementById('botStatus');
+        const botText = document.getElementById('botStatusText');
+        if (stats.botRunning) {
+          botDot.classList.remove('offline');
+          botText.textContent = 'Bot: running';
+          botText.title = stats.botWatching || '';
+        } else {
+          botDot.classList.add('offline');
+          botText.textContent = 'Bot: not running';
+        }
+
+        const blacklist = await fetch('/api/blacklist').then(r => r.json());
+        document.getElementById('statBlacklist').textContent = blacklist.blacklisted_names?.length || 0;
+      } catch (err) {}
+    }
+
+    // Current provider state
+    let currentProvider = 'local';
+
+    // Provider switcher
+    function switchProvider(provider) {
+      currentProvider = provider;
+      document.getElementById('providerLocal').classList.toggle('active', provider === 'local');
+      document.getElementById('providerOpenrouter').classList.toggle('active', provider === 'openrouter');
+      document.getElementById('localSettings').style.display = provider === 'local' ? 'block' : 'none';
+      document.getElementById('openrouterSettings').style.display = provider === 'openrouter' ? 'block' : 'none';
+      checkProviderStatus();
+    }
+
+    // Check status of whichever provider is active
+    async function checkProviderStatus(forceRefresh = false) {
+      const dot = document.getElementById('providerStatus');
+      const text = document.getElementById('providerStatusText');
+
+      if (currentProvider === 'local') {
+        try {
+          const status = await fetch('/api/ollama/status').then(r => r.json());
+          if (status.connected) {
+            dot.classList.remove('offline');
+            text.textContent = `Ollama Connected (${status.models?.length || 0} models)`;
+            populateModelDropdowns(status.models || []);
+          } else {
+            dot.classList.add('offline');
+            text.textContent = 'Ollama Offline';
+          }
+        } catch (err) {
+          dot.classList.add('offline');
+          text.textContent = 'Ollama Offline';
+        }
+      } else {
+        dot.classList.add('offline');
+        text.textContent = 'OpenRouter: Checking...';
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 15000);
+          const url = forceRefresh ? '/api/openrouter/status?refresh=1' : '/api/openrouter/status';
+          const status = await fetch(url, { signal: controller.signal }).then(r => r.json());
+          clearTimeout(timeout);
+
+          // The model list needs no API key - populate it whenever we have one
+          const dropdownModels = [...(status.freeModels || []), ...(status.cheapModels || [])];
+          if (dropdownModels.length) {
+            populateOpenRouterModels(dropdownModels);
+          }
+
+          if (status.connected) {
+            dot.classList.remove('offline');
+            text.textContent = `OpenRouter Connected (${status.freeModels?.length || 0} free models)`;
+          } else {
+            dot.classList.add('offline');
+            text.textContent = `OpenRouter: ${status.error || 'Disconnected'}`;
+          }
+        } catch (err) {
+          dot.classList.add('offline');
+          text.textContent = err.name === 'AbortError' ? 'OpenRouter: Timeout' : 'OpenRouter: Error';
+        }
+      }
+    }
+
+    // Populate Ollama model dropdowns
+    function populateModelDropdowns(models) {
+      const fastSelect = document.getElementById('modelFast');
+      const smartSelect = document.getElementById('modelSmart');
+
+      const currentFast = fastSelect.value;
+      const currentSmart = smartSelect.value;
+
+      fastSelect.innerHTML = '';
+      smartSelect.innerHTML = '';
+
+      if (models.length === 0) {
+        fastSelect.innerHTML = '<option value="">No models found</option>';
+        smartSelect.innerHTML = '<option value="">No models found</option>';
+        return;
+      }
+
+      models.forEach(model => {
+        const name = model.name;
+        fastSelect.innerHTML += `<option value="${name}">${name}</option>`;
+        smartSelect.innerHTML += `<option value="${name}">${name}</option>`;
+      });
+
+      if (currentFast) fastSelect.value = currentFast;
+      if (currentSmart) smartSelect.value = currentSmart;
+    }
+
+    // Populate OpenRouter model dropdowns
+    function populateOpenRouterModels(models) {
+      const fastSelect = document.getElementById('openrouterModelFast');
+      const smartSelect = document.getElementById('openrouterModelSmart');
+
+      const currentFast = fastSelect.value;
+      const currentSmart = smartSelect.value;
+
+      fastSelect.innerHTML = '';
+      smartSelect.innerHTML = '';
+
+      if (models.length === 0) {
+        fastSelect.innerHTML = '<option value="">No free models found</option>';
+        smartSelect.innerHTML = '<option value="">No free models found</option>';
+        return;
+      }
+
+      document.getElementById('openrouterModelCount').textContent = `${models.length} free models available`;
+
+      models.forEach(model => {
+        const ctx = model.context_length ? ` [${Math.round(model.context_length / 1000)}k ctx]` : '';
+        const star = model.recommended ? '⭐ ' : '';
+        const price = model.paid ? ` 💰 ${fmtPer1k(model.pricePer1k)}` : '';
+        const label = `${star}${model.name || model.id}${ctx}${price}`;
+        const opt = `<option value="${model.id}">${label}</option>`;
+        fastSelect.innerHTML += opt;
+        smartSelect.innerHTML += opt;
+      });
+
+      if (currentFast) fastSelect.value = currentFast;
+      if (currentSmart) smartSelect.value = currentSmart;
+    }
+
+    // Format an estimated price per 1000 messages
+    function fmtPer1k(p) {
+      if (!p) return 'FREE';
+      return '$' + (p < 0.01 ? p.toFixed(4) : p < 1 ? p.toFixed(3) : p.toFixed(2)) + '/1k msgs';
+    }
+
+    // Model search over the full catalog (free + paid)
+    let modelSearchTimer = null;
+    function searchModels() {
+      clearTimeout(modelSearchTimer);
+      modelSearchTimer = setTimeout(doModelSearch, 300);
+    }
+
+    async function doModelSearch() {
+      const q = document.getElementById('modelSearch').value.trim();
+      const box = document.getElementById('modelSearchResults');
+      if (!q) { box.innerHTML = ''; return; }
+      box.innerHTML = '<span style="color: var(--text-secondary)">Searching...</span>';
+      try {
+        const resp = await fetch('/api/openrouter/models?q=' + encodeURIComponent(q));
+        let data;
+        try {
+          data = await resp.json();
+        } catch {
+          throw new Error('the dashboard is running old code - restart it (Ctrl+C, then npm start)');
+        }
+        if (data.error) { box.innerHTML = `<span style="color: var(--error)">${data.error}</span>`; return; }
+        if (!data.models.length) { box.innerHTML = '<span style="color: var(--text-secondary)">No models match</span>'; return; }
+        box.innerHTML = data.models.map(m => {
+          const ctx = m.context_length ? ` · ${Math.round(m.context_length / 1000)}k ctx` : '';
+          return `<div style="display:flex; align-items:center; gap:8px; padding:6px 8px; border-bottom:1px solid rgba(255,255,255,0.06); font-size:0.85rem;">
+            <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${m.name || m.id}">${m.free ? '🆓' : '💰'} ${m.id}</span>
+            <span style="color: var(--text-secondary); white-space:nowrap;">${fmtPer1k(m.pricePer1k)}${ctx}</span>
+            <button class="btn btn-secondary" style="padding:2px 10px; font-size:0.75rem;" onclick="useSearchModel('openrouterModelFast', '${m.id}')">Fast</button>
+            <button class="btn btn-secondary" style="padding:2px 10px; font-size:0.75rem;" onclick="useSearchModel('openrouterModelSmart', '${m.id}')">Smart</button>
+          </div>`;
+        }).join('');
+      } catch (err) {
+        box.innerHTML = `<span style="color: var(--error)">Search failed: ${err.message}</span>`;
+      }
+    }
+
+    function useSearchModel(selectId, id) {
+      const sel = document.getElementById(selectId);
+      if (![...sel.options].some(o => o.value === id)) {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = id;
+        sel.appendChild(opt);
+      }
+      sel.value = id;
+      const slot = selectId === 'openrouterModelFast' ? 'Fast' : 'Smart';
+      showAlert('settingsAlert', `${slot} model set to ${id} - click "Save Settings" to apply`);
+    }
+
+    // Load OpenRouter models manually (bypasses the server-side cache)
+    async function loadOpenRouterModels() {
+      const btn = document.getElementById('refreshModelsBtn');
+      btn.disabled = true;
+      document.getElementById('openrouterModelCount').textContent = 'Loading free models...';
+      await checkProviderStatus(true);
+      btn.disabled = false;
+    }
+
+    // Test AI
+    async function testAI() {
+      const name = document.getElementById('testName').value || 'Enemy';
+      const message = document.getElementById('testMessage').value;
+
+      if (!message) {
+        showAlert('testerAlert', 'Enter a message to test', 'error');
+        return;
+      }
+
+      document.getElementById('testResponse').innerHTML = '<span style="color: var(--text-secondary)">Generating...</span>';
+
+      try {
+        const res = await fetch('/api/test-ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, message })
+        }).then(r => r.json());
+
+        if (res.error) {
+          document.getElementById('testResponse').innerHTML = `<span style="color: var(--error)">AI error: ${res.error}</span><div class="meta">${res.elapsed ?? '?'}ms</div>`;
+        } else if (res.filtered) {
+          document.getElementById('testResponse').innerHTML = `<span class="filtered">${res.response}</span><div class="meta">Filtered | ${res.elapsed}ms</div>`;
+        } else {
+          const typeLabel = res.modelType === 'smart' ? '🧠 Smart' : '⚡ Fast';
+          document.getElementById('testResponse').innerHTML = `<span class="response">${res.response}</span><div class="meta">${typeLabel}: ${res.model} | ${res.elapsed}ms</div>`;
+        }
+      } catch (err) {
+        document.getElementById('testResponse').innerHTML = `<span style="color: var(--error)">Error: ${err.message}</span>`;
+      }
+    }
+
+    // Save functions
+    async function savePersonality() {
+      try {
+        await fetch('/api/config/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            disable_personality: document.getElementById('disablePersonality').checked,
+            ai_personality: {
+              name: document.getElementById('botName').value,
+              tone: document.getElementById('tone').value,
+              style: document.getElementById('style').value,
+              uncensored: document.getElementById('uncensored').checked
+            },
+            system_prompt: document.getElementById('systemPrompt').value,
+            custom_context: document.getElementById('customContext').value
+          })
+        });
+        showAlert('personalityAlert', 'Personality saved!');
+      } catch (err) {
+        showAlert('personalityAlert', 'Save failed', 'error');
+      }
+    }
+
+    async function saveBehavior() {
+      try {
+        await fetch('/api/config/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            human_behavior: {
+              enabled: document.getElementById('humanEnabled').checked,
+              min_delay: parseInt(document.getElementById('minDelay').value),
+              max_delay: parseInt(document.getElementById('maxDelay').value),
+              skip_chance: parseInt(document.getElementById('skipChance').value),
+              typo_chance: parseInt(document.getElementById('typoChance').value),
+              variable_length: document.getElementById('variableLength').checked
+            }
+          })
+        });
+        showAlert('behaviorAlert', 'Behavior settings saved!');
+      } catch (err) {
+        showAlert('behaviorAlert', 'Save failed', 'error');
+      }
+    }
+
+    async function saveFilters() {
+      try {
+        await fetch('/api/config/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            smart_filter: {
+              enabled: document.getElementById('filterEnabled').checked,
+              ignore_greetings: document.getElementById('filterGreetings').checked,
+              ignore_callouts: document.getElementById('filterCallouts').checked,
+              ignore_single_words: document.getElementById('filterSingleWords').checked,
+              ignore_system_messages: document.getElementById('filterSystem').checked,
+              min_interesting_length: parseInt(document.getElementById('minLength').value)
+            }
+          })
+        });
+        showAlert('filterAlert', 'Filter settings saved!');
+      } catch (err) {
+        showAlert('filterAlert', 'Save failed', 'error');
+      }
+    }
+
+    async function saveSettings() {
+      try {
+        await fetch('/api/config/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bot_settings: {
+              ai_provider: currentProvider,
+              ollama_host: document.getElementById('ollamaHost').value,
+              model_fast: document.getElementById('modelFast').value,
+              model_smart: document.getElementById('modelSmart').value,
+              openrouter_api_key: document.getElementById('openrouterApiKey').value,
+              openrouter_model_fast: document.getElementById('openrouterModelFast').value,
+              openrouter_model_smart: document.getElementById('openrouterModelSmart').value,
+              temperature: parseFloat(document.getElementById('temperature').value),
+              num_gpu_layers: parseInt(document.getElementById('gpuLayers').value),
+              num_predict: parseInt(document.getElementById('numPredict').value),
+              num_ctx: parseInt(document.getElementById('numCtx').value),
+              max_chars_per_message: parseInt(document.getElementById('maxChars').value),
+              queue_delay_ms: parseInt(document.getElementById('queueDelay').value),
+              reply_cooldown_ms: parseInt(document.getElementById('replyCooldown').value) || 0,
+              send_to_game: document.getElementById('sendToGame').checked,
+              exec_key: document.getElementById('execKey').value.toLowerCase().trim() || 'v'
+            }
+          })
+        });
+        showAlert('settingsAlert', 'Settings saved!');
+        checkProviderStatus();
+      } catch (err) {
+        showAlert('settingsAlert', 'Save failed', 'error');
+      }
+    }
+
+    // Blacklist
+    function renderBlacklist(names) {
+      const list = document.getElementById('blacklistList');
+      if (!names.length) {
+        list.innerHTML = '<p style="color: var(--text-secondary)">No players blacklisted</p>';
+        return;
+      }
+      list.innerHTML = names.map(name => `
+        <div class="blacklist-item">
+          <span>${name}</span>
+          <button class="remove" onclick="removeBlacklist('${name}')">Remove</button>
+        </div>
+      `).join('');
+    }
+
+    async function addBlacklist() {
+      const name = document.getElementById('blacklistName').value.trim();
+      if (!name) return;
+
+      try {
+        const res = await fetch('/api/blacklist/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        }).then(r => r.json());
+
+        if (res.success) {
+          renderBlacklist(res.blacklist.blacklisted_names);
+          document.getElementById('blacklistName').value = '';
+          loadStats();
+          showAlert('blacklistAlert', 'Player blacklisted');
+        } else {
+          showAlert('blacklistAlert', res.error, 'error');
+        }
+      } catch (err) {
+        showAlert('blacklistAlert', 'Failed to add', 'error');
+      }
+    }
+
+    async function removeBlacklist(name) {
+      try {
+        const res = await fetch(`/api/blacklist/remove/${encodeURIComponent(name)}`, {
+          method: 'DELETE'
+        }).then(r => r.json());
+
+        if (res.success) {
+          renderBlacklist(res.blacklist.blacklisted_names);
+          loadStats();
+        }
+      } catch (err) {}
+    }
+
+    // History
+    async function loadHistory() {
+      try {
+        const history = await fetch('/api/history').then(r => r.json());
+        const list = document.getElementById('historyList');
+
+        if (!history.length) {
+          list.innerHTML = '<p style="color: var(--text-secondary)">No chat history yet</p>';
+          return;
+        }
+
+        list.innerHTML = history.slice().reverse().map(h => `
+          <div class="history-item">
+            <span class="user">${h.username}</span>
+            <div class="message">"${h.message}"</div>
+            <div class="bot-response">Bot: ${h.response}</div>
+            <div class="time">${new Date(h.timestamp).toLocaleString()}</div>
+          </div>
+        `).join('');
+      } catch (err) {}
+    }
+
+    async function clearHistory() {
+      if (!confirm('Clear all chat history?')) return;
+      try {
+        await fetch('/api/history/clear', { method: 'DELETE' });
+        loadHistory();
+      } catch (err) {}
+    }
+
+    // Enter key support
+    document.getElementById('testMessage').addEventListener('keypress', e => {
+      if (e.key === 'Enter') testAI();
+    });
+
+    document.getElementById('blacklistName').addEventListener('keypress', e => {
+      if (e.key === 'Enter') addBlacklist();
+    });
+
+    // Show warning when editing system prompt and reset color
+    document.getElementById('systemPrompt').addEventListener('focus', () => {
+      document.getElementById('systemPromptWarning').style.display = 'block';
+      document.getElementById('systemPrompt').style.color = 'var(--text-primary)';
+    });
+
+    // Reset system prompt to default
+    async function resetSystemPrompt() {
+      const defaultPrompt = await fetch('/api/default-prompt').then(r => r.json());
+      document.getElementById('systemPrompt').value = defaultPrompt.prompt;
+      document.getElementById('systemPrompt').style.color = 'var(--text-secondary)';
+      document.getElementById('systemPromptWarning').style.display = 'none';
+    }
+
+    // Bind command helper
+    function updateBindCommand() {
+      const key = (document.getElementById('execKey').value || 'v').toLowerCase().trim();
+      document.getElementById('bindCommand').value = `bind "${key}" "exec liveinput.cfg"`;
+    }
+
+    document.getElementById('execKey').addEventListener('input', updateBindCommand);
+
+    async function copyBind() {
+      const cmd = document.getElementById('bindCommand').value;
+      try {
+        await navigator.clipboard.writeText(cmd);
+        showAlert('settingsAlert', 'Bind command copied to clipboard!');
+      } catch {
+        document.getElementById('bindCommand').select();
+      }
+    }
+
+    // Initialize
+    loadData().then(() => updateBindCommand());
+    checkProviderStatus();
+    setInterval(loadStats, 10000);
+    // Only auto-refresh status for local provider (Ollama is quick, OpenRouter is slow)
+    setInterval(() => { if (currentProvider === 'local') checkProviderStatus(); }, 30000);
+  </script>
+</body>
+</html>

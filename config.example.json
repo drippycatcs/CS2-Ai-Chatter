@@ -1,0 +1,56 @@
+{
+  "bot_settings": {
+    "console_log_path": "",
+    "cs2_cfg_path": "",
+    "ai_provider": "local",
+    "ollama_host": "http://127.0.0.1:11434",
+    "model_fast": "llama3.2:3b",
+    "model_smart": "llama3.2:3b",
+    "openrouter_api_key": "",
+    "openrouter_model_fast": "openai/gpt-oss-20b:free",
+    "openrouter_model_smart": "openai/gpt-oss-120b:free",
+    "max_chars_per_message": 128,
+    "queue_delay_ms": 250,
+    "reply_cooldown_ms": 0,
+    "enable_team_chat": false,
+    "enable_all_chat": true,
+    "send_to_game": true,
+    "exec_key": "v",
+    "use_gpu": true,
+    "num_gpu_layers": 99,
+    "temperature": 0.7,
+    "top_p": 0.85,
+    "num_ctx": 2048,
+    "num_predict": 60,
+    "keep_alive": "15m"
+  },
+  "smart_filter": {
+    "enabled": true,
+    "ignore_greetings": false,
+    "ignore_single_words": true,
+    "ignore_callouts": true,
+    "ignore_system_messages": true,
+    "min_interesting_length": 1
+  },
+  "ai_personality": {
+    "name": "",
+    "tone": "witty",
+    "style": "casual",
+    "uncensored": false
+  },
+  "human_behavior": {
+    "enabled": false,
+    "min_delay": 500,
+    "max_delay": 2000,
+    "skip_chance": 10,
+    "typo_chance": 5,
+    "variable_length": true
+  },
+  "logging": {
+    "save_chat_history": true,
+    "log_level": "info"
+  },
+  "disable_personality": true,
+  "custom_context": "",
+  "system_prompt": ""
+}

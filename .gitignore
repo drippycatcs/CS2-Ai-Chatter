@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+keypress/package-lock.json
+
+# Secrets
+.env
+
+# Local runtime state (created by `npm run setup` / the bot itself)
+config.json
+conversation_history.json
+blacklist.json
+
+# Logs
+*.log
+
+# Bot heartbeat (written while the bot runs)
+.bot_status.json
+
+# Local tooling
+.claude/
+.playwright-mcp/
