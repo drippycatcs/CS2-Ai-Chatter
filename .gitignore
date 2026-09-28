@@ -19,3 +19,4 @@ blacklist.json
 # Local tooling
 .claude/
 .playwright-mcp/
+/brag-output
